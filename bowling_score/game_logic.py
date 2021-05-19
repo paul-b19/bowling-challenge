@@ -1,6 +1,4 @@
 from bowling_score.models import Ball, Frame, Game
-from models import *
-
 
 
 class GameLogic:
@@ -17,6 +15,7 @@ class GameLogic:
                 frame_score=self.current_frame.frame_score
             )
         current_game = Game.fetch_game(game=self.game)
+        print(current_game) ###
         # more logic here
         return current_game, error
 
@@ -32,7 +31,7 @@ class GameLogic:
             return add_frame, 'Entry is incorrect'
 
     def process_symbol(self, symbol):
-        previous_ball = self.current_frame.ball_set().first()
+        previous_ball = self.current_frame.ball_set.first()
         add_frame = True
         kwargs = {'frame': self.current_frame, 'ball_result': symbol}
         if (symbol == 'X' and previous_ball) or (symbol == '/' and not previous_ball):
@@ -64,7 +63,7 @@ class GameLogic:
         return add_frame, None
 
     def process_number(self, number):
-        previous_ball = self.current_frame.ball_set().first()
+        previous_ball = self.current_frame.ball_set.first()
         add_frame = False
         kwargs = {'frame': self.current_frame, 'ball_result': number, 'ball_points': int(number)}
         if not previous_ball:
@@ -81,19 +80,21 @@ class GameLogic:
         pass
 
     def add_to_open_frames(self, points):
-        frame_qs = Frame.fetch_open_frames(self.game)
+        frame_qs = Frame.fetch_all_frames(self.game)
+        temp_score = 0
         previous_frame_closed = True
         for i in frame_qs:
-            i.frame_score += points
-            i.bonus_rolls = i.bonus_rolls - 1 if i.bonus_rolls > 0 else 0
-            if i.bonus_rolls == 0 and previous_frame_closed:
+            if i.frame_closed:
+                continue
+            i.frame_score = i.frame_score + points + temp_score
+            temp_score += points
+            if i.rolls_left == 0 and i.bonus_rolls == 0 and previous_frame_closed:
                 i.frame_closed = True
-            else:
-                previous_frame_closed = False
+            i.bonus_rolls = i.bonus_rolls - 1 if i.bonus_rolls > 0 else 0
+            i.rolls_left = i.rolls_left - 1 if i.rolls_left > 0 else 0
             i.save()
-
-    def display_result():
-        pass
+            previous_frame_closed = i.frame_closed
+            self.current_frame = i
 
     def game_over():
         pass

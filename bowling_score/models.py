@@ -32,8 +32,9 @@ class Game(BaseModel):
         game_list = list()
         for i in frame_qs:
             temp_dict = {
-                'frame_score': i.frame_score,
-                'balls': [(b.ball_number, b.ball_result) for b in i.ball_set.order_by('ball_number')]
+                i.frame_number: i.frame_score,
+                # i.frame_number: i.frame_score if i.frame_closed else '',
+                'balls': ' '.join(i.ball_set.order_by('ball_number').values_list('ball_result', flat=True))
             }
             game_list.append(temp_dict)
         return game_list
@@ -51,6 +52,7 @@ class Frame(BaseModel):
     frame_number = models.IntegerField()
     frame_score = models.IntegerField(default=0)
     frame_closed = models.BooleanField(default=False)
+    rolls_left = models.IntegerField(default=2)
     bonus_rolls = models.IntegerField(default=0)
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
 
@@ -66,11 +68,6 @@ class Frame(BaseModel):
     @classmethod
     def fetch_all_frames(cls, game):
         frame_qs = cls.objects.filter(game=game).prefetch_related('ball_set').order_by('frame_number')
-        return frame_qs
-
-    @classmethod
-    def fetch_open_frames(cls, game):
-        frame_qs = cls.objects.filter(game=game, frame_closed=False).order_by('frame_number')
         return frame_qs
 
 

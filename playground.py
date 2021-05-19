@@ -13,10 +13,24 @@ def main():
     # games = Game.fetch_n_latest_games(3)
     # for i in games:
     #     print(i.title)
+    
+    # frame = Frame.objects.first()
+    # print(frame)
 
-    games = Game.objects.all()
-    for i, j in list(enumerate(games)):
-        print(i, j.title)
+    # balls = frame.ball_set.first()
+    # print(balls)
+
+    from bowling_score.game_logic import GameLogic
+    game = GameLogic()
+    game.roll_a_ball('x')
+    game.roll_a_ball('x')
+    game.roll_a_ball('1')
+    game.roll_a_ball('/')
+    game.roll_a_ball('5')
+    game.roll_a_ball('-')
+    game.roll_a_ball('-')
+    game.roll_a_ball('/')
+    game.roll_a_ball('9')
 
 if __name__ == '__main__':
     main()
