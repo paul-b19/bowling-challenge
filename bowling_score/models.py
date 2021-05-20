@@ -29,15 +29,16 @@ class Game(BaseModel):
     @staticmethod
     def fetch_game(game):
         frame_qs = Frame.fetch_all_frames(game=game)
-        game_list = list()
+        game_dict = {'title': None, 'frames': [], 'balls': [], 'scores': []}
         for i in frame_qs:
-            temp_dict = {
-                i.frame_number: i.frame_score,
-                # i.frame_number: i.frame_score if i.frame_closed else '',
-                'balls': ' '.join(i.ball_set.order_by('ball_number').values_list('ball_result', flat=True))
-            }
-            game_list.append(temp_dict)
-        return game_list
+            game_dict['title'] = game.title
+            game_dict['frames'].append(i.frame_number)
+            game_dict['balls'].append(
+                ' '.join(i.ball_set.order_by('ball_number').values_list('ball_result', flat=True))
+            )
+            game_dict['scores'].append(i.frame_score)
+            # game_dict['scores'].append(i.frame_score if i.frame_closed else '')
+        return game_dict
 
     @classmethod
     def fetch_n_latest_games(cls, n):

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load static %}
+{% block page_content %}
+<div class="container">
+    <div class="h-100 row align-items-center justify-content-md-center">
+        <div class="col-md-12 text-center">
+            <h1>Bowling Score</h1>
+        </div>
+        <div class="col-md-12 text-center">
+            <h3>{{ message }}</h3>
+        </div>
+        <div class="col-md-12 text-center">
+            <a href="{% url 'game' %}" class="btn btn-outline-secondary">Start New Game</a>
+        </div>
+        <div class="col-md-12 text-center">
+            <h3>History</h3>
+        </div>
+        {% for game in score_board %}
+        <div class="col-md-3 text-center">
+            <h6>{{ game.title }}</h6>
+        </div>
+        <div class="col-md-9 text-center">
+            <table class="table">
+                <tbody>
+                    <tr>
+                        <th>Frame</th>
+                        {% for frame in game.frames %}
+                        <td>{{ frame }}</td>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <th>Input</th>
+                        {% for ball in game.balls %}
+                        <td>{{ ball }}</td>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <th>Score</th>
+                        {% for score in game.scores %}
+                        <td>{{ score }}</td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

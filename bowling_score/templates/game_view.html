@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+{% block page_content %}
+<div class="container">
+    <div class="h-100 row align-items-center justify-content-md-center">
+        <div class="col-md-12 text-center">
+            <h1>Bowling Score</h1>
+        </div>
+        <div class="col-md-9 text-center">
+            <table class="table">
+                <tbody>
+                    <tr>
+                        <th>Frame</th>
+                        {% for _ in '0123456789'|make_list %}
+                        <td>{{ forloop.counter }}</td>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <th>Input</th>
+                        {% for ball in game_score.balls %}
+                        <td>{{ ball }}</td>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <th>Score</th>
+                        {% for score in game_score.scores %}
+                        <td>{{ score }}</td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="col-md-4 text-center">
+            <div class="input-group mb-3">
+                <input type="text" class="form-control" placeholder="Result" aria-label="Recipient's username" aria-describedby="basic-addon2">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="button">Submit</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12 text-center">
+            <h3>{{ message }}</h3>
+        </div>
+    </div>
+</div>
+{% endblock %}

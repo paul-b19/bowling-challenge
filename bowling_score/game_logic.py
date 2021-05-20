@@ -8,18 +8,18 @@ class GameLogic:
 
     def roll_a_ball(self, entry):
         add_frame, message = self.verify_and_process(entry)
-        completed, score_board = self.check_progress()
+        completed = self.check_progress()
         add_frame = False if self.current_frame.frame_number == 10 else add_frame
-        message = "Game's comleted" if completed else message
+        message = 'Game completed' if completed else message
         if add_frame:
             self.current_frame = Frame.add_frame(
                 game=self.game,
                 frame_number=self.current_frame.frame_number + 1,
                 frame_score=self.current_frame.frame_score
             )
-        current_game = Game.fetch_game(game=self.game)
-        print(current_game) ### for test
-        return current_game, message, score_board
+        game_score = Game.fetch_game(game=self.game)
+        print(game_score, '\n') ### for test
+        return game_score, message
 
     def verify_and_process(self, entry):
         add_frame = False
@@ -117,5 +117,9 @@ class GameLogic:
 
     def check_progress(self):
         completed = self.game.frame_set.filter(frame_closed=True).count() == 10
-        score_board = Game.fetch_n_latest_games(n=3) if completed else None
-        return completed, score_board
+        # score_board = None
+        if completed:
+            self.game.completed = True
+            self.game.save()
+            # score_board = Game.fetch_n_latest_games(n=3)
+        return completed #, score_board
