@@ -7,7 +7,10 @@ class GameLogic:
         self.current_frame = Frame.add_frame(game=self.game, frame_number=1)
 
     def roll_a_ball(self, entry):
-        add_frame, error = self.verify_and_process(entry)
+        add_frame, message = self.verify_and_process(entry)
+        completed, score_board = self.check_progress()
+        add_frame = False if self.current_frame.frame_number == 10 else add_frame
+        message = "Game's comleted" if completed else message
         if add_frame:
             self.current_frame = Frame.add_frame(
                 game=self.game,
@@ -15,9 +18,8 @@ class GameLogic:
                 frame_score=self.current_frame.frame_score
             )
         current_game = Game.fetch_game(game=self.game)
-        print(current_game) ###
-        # more logic here
-        return current_game, error
+        print(current_game) ### for test
+        return current_game, message, score_board
 
     def verify_and_process(self, entry):
         add_frame = False
@@ -31,70 +33,89 @@ class GameLogic:
             return add_frame, 'Entry is incorrect'
 
     def process_symbol(self, symbol):
-        previous_ball = self.current_frame.ball_set.first()
-        add_frame = True
+        previous_ball = self.current_frame.ball_set.order_by('ball_number').last()
+        add_frame, strike_or_spare = True, True
         kwargs = {'frame': self.current_frame, 'ball_result': symbol}
-        if (symbol == 'X' and previous_ball) or (symbol == '/' and not previous_ball):
+
+        if (symbol == 'X' and self.current_frame.frame_number != 10 and self.current_frame.rolls_left < 2) \
+        or (symbol == '/' and self.current_frame.rolls_left > 1):
             add_frame = False
             return add_frame, 'Entry is incorrect'
         elif symbol == 'X':
             ball = Ball.add_ball(
-                ball_number=1,
+                ball_number=previous_ball.ball_number + 1 if previous_ball else 1,
                 ball_points=10,
                 **kwargs
             )
             self.current_frame.bonus_rolls = 2
+            if self.current_frame.frame_number != 10:
+                self.current_frame.rolls_left = 1
         elif symbol == '/':
             ball = Ball.add_ball(
-                ball_number=2,
+                ball_number=previous_ball.ball_number + 1,
                 ball_points=10 - previous_ball.ball_points,
                 **kwargs
             )
             self.current_frame.bonus_rolls = 1
         elif symbol == '-':
             ball = Ball.add_ball(
-                ball_number=2 if previous_ball else 1,
+                ball_number=previous_ball.ball_number + 1 if previous_ball else 1,
                 ball_points=0,
                 **kwargs
             )
-            add_frame = True if previous_ball else False
+            strike_or_spare = False
+            add_frame = True if self.current_frame.rolls_left < 2 else False
         self.current_frame.save()
-        self.add_to_open_frames(points=ball.ball_points)
+        self.add_to_open_frames(points=ball.ball_points, strike_or_spare=strike_or_spare)
         return add_frame, None
 
     def process_number(self, number):
-        previous_ball = self.current_frame.ball_set.first()
+        previous_ball = self.current_frame.ball_set.order_by('ball_number').last()
         add_frame = False
         kwargs = {'frame': self.current_frame, 'ball_result': number, 'ball_points': int(number)}
+
         if not previous_ball:
             ball = Ball.add_ball(ball_number=1, **kwargs)
+        elif previous_ball.ball_result in ['X', '/']:
+            ball = Ball.add_ball(ball_number=previous_ball.ball_number + 1, **kwargs)
         elif int(number) > 9 - previous_ball.ball_points:
             return add_frame, 'Entry is incorrect'
         else:
-            ball = Ball.add_ball(ball_number=2, **kwargs)
+            ball = Ball.add_ball(ball_number=previous_ball.ball_number + 1, **kwargs)
             add_frame = True
         self.add_to_open_frames(points=ball.ball_points)
         return add_frame, None
 
-    def process_10th_frame(self):
-        pass
-
-    def add_to_open_frames(self, points):
+    def add_to_open_frames(self, points, strike_or_spare=False):
         frame_qs = Frame.fetch_all_frames(self.game)
-        temp_score = 0
+        extra_points, temp_frame = 0, None
         previous_frame_closed = True
+
         for i in frame_qs:
             if i.frame_closed:
                 continue
-            i.frame_score = i.frame_score + points + temp_score
-            temp_score += points
-            if i.rolls_left == 0 and i.bonus_rolls == 0 and previous_frame_closed:
+            if i.bonus_rolls and not i.rolls_left:
+                i.frame_score = i.frame_score + points + extra_points
+                extra_points += points
+                i.bonus_rolls = max(i.bonus_rolls - 1, 0)
+            if i.rolls_left:
+                i.frame_score = i.frame_score + points + extra_points
+                i.rolls_left = max(i.rolls_left - 1, 0)
+            if not i.rolls_left and not i.bonus_rolls and previous_frame_closed:
                 i.frame_closed = True
-            i.bonus_rolls = i.bonus_rolls - 1 if i.bonus_rolls > 0 else 0
-            i.rolls_left = i.rolls_left - 1 if i.rolls_left > 0 else 0
             i.save()
             previous_frame_closed = i.frame_closed
-            self.current_frame = i
+            temp_frame = i
 
-    def game_over():
-        pass
+        if temp_frame.frame_number == 10 and temp_frame.ball_set.count() < 3 and strike_or_spare:
+            temp_frame.rolls_left += 1
+            temp_frame.frame_closed = False
+        elif temp_frame.frame_number == 10 and temp_frame.rolls_left == 0:
+            temp_frame.frame_closed = True
+        temp_frame.save()
+        self.current_frame = temp_frame
+
+    def check_progress(self):
+        completed = self.game.frame_set.filter(frame_closed=True).count() == 10
+        score_board = Game.fetch_n_latest_games(n=3) if completed else None
+        return completed, score_board
