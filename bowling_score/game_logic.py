@@ -11,6 +11,7 @@ class GameLogic:
         self.message = None
 
     def roll_a_ball(self, entry):
+        ''' main function, called from views '''
         add_frame, self.message = self.verify_and_process(entry)
         self.game_completed = self.check_progress()
         add_frame = False if self.current_frame.frame_number == 10 else add_frame
@@ -21,12 +22,14 @@ class GameLogic:
                 frame_score=self.current_frame.frame_score
             )
         self.game_score = Game.fetch_game(game=self.game)
-        print(self.game_score, '\n')
+        # save game instance to cache for views
         cache.set(
             'current_game', self, 5 if self.game_completed else None
         )
+        return self
 
     def verify_and_process(self, entry):
+        ''' initial entry validation or redirection '''
         add_frame = False
         if len(entry) != 1 or entry == '0':
             return add_frame, 'Entry is incorrect'
@@ -38,12 +41,13 @@ class GameLogic:
             return add_frame, 'Entry is incorrect'
 
     def process_symbol(self, symbol):
+        ''' validate and process symbol entry '''
         previous_ball = self.current_frame.ball_set.order_by('ball_number').last()
         add_frame, strike_or_spare = True, True
         kwargs = {'frame': self.current_frame, 'ball_result': symbol}
 
         if (symbol == 'X' and self.current_frame.frame_number != 10 and self.current_frame.rolls_left < 2) \
-        or (symbol == '/' and self.current_frame.rolls_left > 1):
+        or (symbol == '/' and (self.current_frame.rolls_left > 1 or previous_ball.ball_result == '/')):
             add_frame = False
             return add_frame, 'Entry is incorrect'
         elif symbol == 'X':
@@ -75,6 +79,7 @@ class GameLogic:
         return add_frame, None
 
     def process_number(self, number):
+        ''' validate and process numeric entry '''
         previous_ball = self.current_frame.ball_set.order_by('ball_number').last()
         add_frame = False
         kwargs = {'frame': self.current_frame, 'ball_result': number, 'ball_points': int(number)}
@@ -92,10 +97,12 @@ class GameLogic:
         return add_frame, None
 
     def add_to_open_frames(self, points, strike_or_spare=False):
+        ''' update score for all open frames '''
         frame_qs = Frame.fetch_all_frames(self.game)
         extra_points, temp_frame = 0, None
         previous_frame_closed = True
 
+        # basic logic 
         for i in frame_qs:
             if i.frame_closed:
                 continue
@@ -112,17 +119,18 @@ class GameLogic:
             previous_frame_closed = i.frame_closed
             temp_frame = i
 
+        # additional logic for 10th frame
         if temp_frame.frame_number == 10 and temp_frame.ball_set.count() < 3 and strike_or_spare:
             temp_frame.rolls_left += 1
             temp_frame.frame_closed = False
-        elif temp_frame.frame_number == 10 and temp_frame.rolls_left == 0:
+        elif temp_frame.frame_number == 10 and (temp_frame.rolls_left == 0 or temp_frame.ball_set.count() == 3):
             temp_frame.frame_closed = True
         temp_frame.save()
         self.current_frame = temp_frame
 
     def check_progress(self):
-        completed = self.game.frame_set.filter(frame_closed=True).count() == 10 ###
-        # completed = self.current_frame.frame_closed
+        ''' check if game completed'''
+        completed = self.game.frame_set.filter(frame_closed=True).count() == 10
         if completed:
             self.game.completed = True
             self.game.save()

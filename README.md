@@ -1,3 +1,18 @@
+# Installation
+
+## Run in shell:
+1. ```$ pipenv install```
+2. ```$ pipenv shell```
+3. ```$ python manage.py migrate bowling_score```
+4. ```$ python manage.py runserver```
+## Open in browser:
+- <http://localhost:8000/>
+
+## Tests:
+Not really tests, more like playground :)
+- Run in shell ```python playground.py```
+<hr>
+
 # Bowling Scoring Challenge
 
 Design an interface to track the score of a single game of bowling. The interface will accept the result of each ball bowled and calculate the correct score, including spares and strikes. The interface must also indicate if the 10th frame includes a third ball.

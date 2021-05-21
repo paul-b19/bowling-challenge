@@ -22,11 +22,11 @@ def game_view(request):
     if request.method == 'POST':
         form = EntryForm(request.POST)
         game = cache.get('current_game')
-        if game.game_completed:
-            return redirect(index)
         if form.is_valid():
             entry=form.cleaned_data['entry']
-            game.roll_a_ball(entry=entry)
+            game = game.roll_a_ball(entry=entry)
+        if game.game_completed:
+            return redirect(index)
 
     form = EntryForm()
 

@@ -16,7 +16,7 @@ class Game(BaseModel):
 
     def __str__(self):
         frame = self.frame_set.filter(frame_number=10, frame_closed=True).first()
-        score = frame.frame_score if frame else 'Game is not completed'
+        score = frame.frame_score if frame else 'Game in progress'
         return f'Game: {self.title}, Score: {score}'
 
     @classmethod
@@ -36,8 +36,8 @@ class Game(BaseModel):
             game_dict['balls'].append(
                 ' '.join(i.ball_set.order_by('ball_number').values_list('ball_result', flat=True))
             )
-            game_dict['scores'].append(i.frame_score)
-            # game_dict['scores'].append(i.frame_score if i.frame_closed else '')
+            # game_dict['scores'].append(i.frame_score) # <- show score for all frames
+            game_dict['scores'].append(i.frame_score if i.frame_closed else '') # <- show score for closed frames
         return game_dict
 
     @classmethod

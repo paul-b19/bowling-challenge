@@ -11,56 +11,29 @@ from bowling_score.game_logic import GameLogic
 
 def main():
 
-    # games = Game.fetch_n_latest_games(3)
+    ''' print n latest games '''
+    # games = Game.fetch_n_latest_games(n=3)
     # for i in games:
     #     print(i.title)
     
+    ''' game test '''
+    ### frames 1 - 9
+    frames_1_to_9 = ['x','7','/','9','-','x','-','8','8','/','-','6','x','x']
+
+    ### 10th frame original
+    n1 = ['x','8','1']
+
+    ### 10th frame options:
+    n2 = ['3','/','1']
+    n3 = ['3','/','x']
+    n4 = ['x','x','1']
+    n5 = ['7','/','x']
+    n6 = ['x','x','x']
+
     game = GameLogic()
-    # frames 1 - 9
-    game.roll_a_ball('x')
-    game.roll_a_ball('7')
-    game.roll_a_ball('/')
-    game.roll_a_ball('9')
-    game.roll_a_ball('-')
-    game.roll_a_ball('x')
-    game.roll_a_ball('-')
-    game.roll_a_ball('8')
-    game.roll_a_ball('8')
-    game.roll_a_ball('/')
-    game.roll_a_ball('-')
-    game.roll_a_ball('6')
-    game.roll_a_ball('x')
-    game.roll_a_ball('x')
-
-    # 10th frame original
-    game.roll_a_ball('x')
-    game.roll_a_ball('8')
-    game.roll_a_ball('1')
-
-    # #2
-    # game.roll_a_ball('3')
-    # game.roll_a_ball('/')
-    # game.roll_a_ball('1')
-
-    # #3
-    # game.roll_a_ball('3')
-    # game.roll_a_ball('/')
-    # game.roll_a_ball('x')
-
-    # #4
-    # game.roll_a_ball('x')
-    # game.roll_a_ball('x')
-    # game.roll_a_ball('1')
-
-    # #5
-    # game.roll_a_ball('x')
-    # game.roll_a_ball('x')
-    # game.roll_a_ball('-')
-
-    # #6
-    # game.roll_a_ball('x')
-    # game.roll_a_ball('x')
-    # game.roll_a_ball('x')
+    for i in frames_1_to_9 + n1: # <- change 10th frame here
+        game = game.roll_a_ball(i)
+        print(game.game_score, '\n')
 
 if __name__ == '__main__':
     main()
