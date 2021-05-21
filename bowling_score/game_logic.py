@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from bowling_score.models import Ball, Frame, Game
 
 
@@ -5,21 +6,25 @@ class GameLogic:
     def __init__(self):
         self.game = Game.create_game()
         self.current_frame = Frame.add_frame(game=self.game, frame_number=1)
+        self.game_score = Game.fetch_game(game=self.game)
+        self.game_completed = False
+        self.message = None
 
     def roll_a_ball(self, entry):
-        add_frame, message = self.verify_and_process(entry)
-        completed = self.check_progress()
+        add_frame, self.message = self.verify_and_process(entry)
+        self.game_completed = self.check_progress()
         add_frame = False if self.current_frame.frame_number == 10 else add_frame
-        message = 'Game completed' if completed else message
         if add_frame:
             self.current_frame = Frame.add_frame(
                 game=self.game,
                 frame_number=self.current_frame.frame_number + 1,
                 frame_score=self.current_frame.frame_score
             )
-        game_score = Game.fetch_game(game=self.game)
-        print(game_score, '\n') ### for test
-        return game_score, message
+        self.game_score = Game.fetch_game(game=self.game)
+        print(self.game_score, '\n')
+        cache.set(
+            'current_game', self, 5 if self.game_completed else None
+        )
 
     def verify_and_process(self, entry):
         add_frame = False
@@ -116,10 +121,9 @@ class GameLogic:
         self.current_frame = temp_frame
 
     def check_progress(self):
-        completed = self.game.frame_set.filter(frame_closed=True).count() == 10
-        # score_board = None
+        completed = self.game.frame_set.filter(frame_closed=True).count() == 10 ###
+        # completed = self.current_frame.frame_closed
         if completed:
             self.game.completed = True
             self.game.save()
-            # score_board = Game.fetch_n_latest_games(n=3)
-        return completed #, score_board
+        return completed

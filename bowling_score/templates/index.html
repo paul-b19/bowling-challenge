@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load static %}
 {% block page_content %}
 <div class="container">
     <div class="h-100 row align-items-center justify-content-md-center">
@@ -7,17 +6,17 @@
             <h1>Bowling Score</h1>
         </div>
         <div class="col-md-12 text-center">
-            <h3>{{ message }}</h3>
+            <h3 style="color: red;">{{ message }}</h3>
         </div>
         <div class="col-md-12 text-center">
             <a href="{% url 'game' %}" class="btn btn-outline-secondary">Start New Game</a>
         </div>
         <div class="col-md-12 text-center">
-            <h3>History</h3>
+            <h3>Game History</h3>
         </div>
         {% for game in score_board %}
         <div class="col-md-3 text-center">
-            <h6>{{ game.title }}</h6>
+            <h6 style="{% if game_title == game.title %} color: red; {% endif %}">{{ game.title }}</h6>
         </div>
         <div class="col-md-9 text-center">
             <table class="table">
